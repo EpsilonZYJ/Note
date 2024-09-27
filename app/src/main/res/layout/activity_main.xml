@@ -21,5 +21,6 @@
         android:layout_centerHorizontal="true"
         android:background="#00FF0000"
         android:src="@drawable/tianjia"
-        android:layout_below="@+id/list_view" />
+        android:layout_below="@+id/list_view"
+        android:contentDescription="add" />
 </RelativeLayout>
