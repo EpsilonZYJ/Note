@@ -1,5 +1,6 @@
 package com.example.note
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteDatabase
@@ -30,8 +31,20 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         p0.execSQL(createTableQuery)
     }
 
-    override fun onOpen(db: SQLiteDatabase) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
-        onCreate(db)
+    override fun onUpgrade(p0: SQLiteDatabase, oldVesion: Int, newVersion: Int) {
+        p0.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
+        onCreate(p0)
+    }
+
+    fun insertRecord(record: AccountRecord){
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_ID, record.id)
+            put(COLUMN_DATE, record.date)
+            put(COLUMN_AMOUNT, record.amount)
+            put(COLUMN_PURPOSE, record.purpose)
+            put(COLUMN_TAG, record.tag)
+        }
+        db.insert(TABLE_NAME, null, values)
     }
 }
