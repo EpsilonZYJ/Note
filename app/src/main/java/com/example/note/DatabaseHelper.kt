@@ -4,6 +4,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteDatabase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION){
 
@@ -46,5 +51,50 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_TAG, record.tag)
         }
         db.insert(TABLE_NAME, null, values)
+    }
+
+    private fun queryRecords(): List<AccountRecord>{
+        val records = mutableListOf<AccountRecord>()
+        val db = this.writableDatabase
+        val cursor = db.query(TABLE_NAME, null, null, null, null, null, null)
+
+        cursor.use{
+            while(it.moveToNext()){
+                val id = it.getString(it.getColumnIndexOrThrow(COLUMN_ID))
+                val date = it.getString(it.getColumnIndexOrThrow(COLUMN_DATE))
+                val amount = it.getDouble(it.getColumnIndexOrThrow(COLUMN_AMOUNT))
+                val purpose = it.getString(it.getColumnIndexOrThrow(COLUMN_PURPOSE))
+                val tag = it.getString(it.getColumnIndexOrThrow(COLUMN_TAG))
+                records.add(AccountRecord(id, date, amount, purpose, tag))
+            }
+        }
+        db.close()
+        return records
+    }
+
+    fun getAllRecords(): Flow<List<AccountRecord>> = flow<List<AccountRecord>> {
+        while(true){
+            val records = queryRecords()
+            emit(records)
+            delay(1000)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun deleteRecord(record: AccountRecord){
+        val db = this.writableDatabase
+        db.delete(TABLE_NAME, "$COLUMN_ID = ?", arrayOf(record.id))
+        db.close()
+    }
+
+    fun updateRcord(record: AccountRecord){
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_DATE, record.date)
+            put(COLUMN_AMOUNT, record.amount)
+            put(COLUMN_PURPOSE, record.purpose)
+            put(COLUMN_TAG, record.tag)
+        }
+        db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(record.id))
+        db.close()
     }
 }
