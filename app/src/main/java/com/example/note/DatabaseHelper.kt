@@ -51,6 +51,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_TAG, record.tag)
         }
         db.insert(TABLE_NAME, null, values)
+        db.close()
     }
 
     private fun queryRecords(): List<AccountRecord>{
@@ -86,7 +87,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.close()
     }
 
-    fun updateRcord(record: AccountRecord){
+    fun updateRecord(record: AccountRecord){
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_DATE, record.date)
@@ -96,5 +97,41 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(record.id))
         db.close()
+    }
+
+    fun getRecordsByDate(date: String): Flow<List<AccountRecord>> = flow{
+        val records = mutableListOf<AccountRecord>()
+        val db = this@DatabaseHelper.readableDatabase
+        val cursor = db.query(TABLE_NAME, null, "$COLUMN_DATE = ?", arrayOf(date), null, null, null)
+
+        with(cursor){
+            while(moveToNext()){
+                val id = getString(getColumnIndexOrThrow(COLUMN_ID))
+                val amount = getDouble(getColumnIndexOrThrow(COLUMN_AMOUNT))
+                val purpose = getString(getColumnIndexOrThrow(COLUMN_PURPOSE))
+                val tag = getString(getColumnIndexOrThrow(COLUMN_TAG))
+                records.add(AccountRecord(id, date, amount, purpose, tag))
+            }
+        }
+        cursor.close()
+        db.close()
+        emit(records)
+    }
+
+    fun getTagCounts(): Flow<Map<String, Int>> = flow{
+        val tagCounts = mutableMapOf<String, Int>()
+        val db = this@DatabaseHelper.readableDatabase
+        val cursor = db.rawQuery("SELECT $COLUMN_TAG, COUNT(*) as count FROM $TABLE_NAME GROUP BY $COLUMN_TAG", null)
+
+        with(cursor){
+            while(moveToNext()){
+                val tag = getString(getColumnIndexOrThrow(COLUMN_TAG))
+                val count = getInt(getColumnIndexOrThrow("count"))
+                tagCounts[tag] = count
+            }
+        }
+        cursor.close()
+        db.close()
+        emit(tagCounts)
     }
 }
