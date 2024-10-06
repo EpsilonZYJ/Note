@@ -64,6 +64,15 @@ fun AccountBookApp(viewModel: AccountBookViewModel = viewModel()){
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        OutlinedTextField(
+            value = searchDate,
+            onValueChange = { searchDate = it },
+            label = { Text("按日期搜索 (yyyy-MM-dd)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+20
+        Spacer(modifier = Modifier.height(16.dp))
+
         RecordList(
             records = filteredRecords,
             onDeleteRecord = viewModel::deleteRecord,
