@@ -70,7 +70,7 @@ fun AccountBookApp(viewModel: AccountBookViewModel = viewModel()){
             label = { Text("按日期搜索 (yyyy-MM-dd)") },
             modifier = Modifier.fillMaxWidth()
         )
-20
+
         Spacer(modifier = Modifier.height(16.dp))
 
         RecordList(
